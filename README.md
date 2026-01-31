@@ -100,7 +100,7 @@ Then restart Stream Deck.
 
 ## Support
 
-If Ampdeck is useful to you, consider [buying me a coffee](https://ko-fi.com/rackemrack). It's totally optional — the plugin is free and always will be.
+If Ampdeck is useful to you, consider [buying me a coffee](https://ko-fi.com/rackemrack). It's totally optional, but any support would be greatly appreciated! :)
 
 ## License
 
