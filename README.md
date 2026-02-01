@@ -2,14 +2,15 @@
 
 **The unofficial Plexamp plugin for Stream Deck+**
 
-![Ampdeck on Stream Deck+](hero.png)
+<!-- Replace the line below with your render once it's ready -->
+<!-- ![Ampdeck on Stream Deck+](screenshots/hero.png) -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/rackemrack)
 
 ---
 
-Ampdeck brings Plexamp to your Stream Deck+. See your album art, track info, and playback time on the LCD keys, with a smooth animated progress bar spanning the touch strip. All updated in real time.
+Ampdeck brings Plexamp to your Stream Deck+. See your album art, track info, and playback time on the LCD keys, with a smooth animated progress bar spanning the touch strip — all updated in real time.
 
 ## Features
 
@@ -33,15 +34,26 @@ Ampdeck brings Plexamp to your Stream Deck+. See your album art, track info, and
 
 1. Download the latest release from the [Releases](https://github.com/rackemrack/ampdeck/releases) page
 2. Extract the zip
-3. **Close Stream Deck completely** (right-click the system tray icon → Quit)
+3. **Close Stream Deck completely**
+
+**Windows:**
+
 4. Double-click **`install.bat`**
+
+**macOS:**
+
+4. Open Terminal, navigate to the extracted folder, and run:
+   ```
+   chmod +x install.sh && ./install.sh
+   ```
+
 5. Start Stream Deck
 
 ## Setup
 
 1. Find **Ampdeck** in the actions list on the right side of the Stream Deck app
 2. Drag **Album Art** to any button
-3. Drag **Now Playing Strip** to between 1 and 4 dials
+3. Drag **Now Playing Strip** to all 4 dials
 4. Optionally drag **Play/Pause**, **Previous**, **Next**, **Track Info**, or **Time Elapsed** to buttons
 5. Click any Ampdeck action and configure:
    - **Server URL** — Your Plex server address (e.g. `http://192.168.1.100:32400`)
@@ -91,15 +103,21 @@ For more details, see the [Plex support article](https://support.plex.tv/article
 
 Copy the `com.rackemrack.ampdeck.sdPlugin` folder to:
 
+**Windows:**
 ```
 %APPDATA%\Elgato\StreamDeck\Plugins\
+```
+
+**macOS:**
+```
+~/Library/Application Support/com.elgato.StreamDeck/Plugins/
 ```
 
 Then restart Stream Deck.
 
 ## Support
 
-If Ampdeck is useful to you, consider [buying me a coffee](https://ko-fi.com/rackemrack). It's totally optional, but any support would be greatly appreciated! :)
+If Ampdeck is useful to you, consider [buying me a coffee](https://ko-fi.com/rackemrack). It's totally optional — the plugin is free and always will be.
 
 ## License
 
