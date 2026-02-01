@@ -2,7 +2,8 @@
 
 **The unofficial Plexamp plugin for Stream Deck+**
 
-![Ampdeck on Stream Deck+](hero.png)
+<!-- Replace the line below with your render once it's ready -->
+<!-- ![Ampdeck on Stream Deck+](screenshots/hero.png) -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/rackemrack)
@@ -15,12 +16,14 @@ Ampdeck brings Plexamp to your Stream Deck+. See your album art, track info, and
 
 - **Album Art** — Live album art on any LCD key with a pause overlay. Tap to play/pause.
 - **Now Playing Strip** — Artist, album, track, or elapsed time on each touch strip panel.
+- **Dial Controls** — Configurable dial actions: rotate to skip tracks or adjust volume, press to play/pause.
 - **Spanning Progress Bar** — A single progress bar that flows across all 4 dials, with colors extracted from album art.
 - **Play / Pause** — Dedicated button with instant visual feedback.
 - **Previous / Next** — Tap to skip tracks. Hold to seek forward or backward.
 - **Track Info** — Audio codec, bitrate, and track number at a glance.
 - **Time Elapsed** — Large elapsed/total time display with its own progress bar.
-- **Dynamic Colors** — Progress bar and accent colors adapt to the current album art.
+- **Dynamic Colors** — Progress bar and accent colors adapt to the current album art, or lock to orange if you prefer.
+- **Configurable Text Colors** — Choose from White, Light Gray, Orange, Amber, or Black to match your setup.
 - **Smooth Interpolation** — Time display updates at 200ms with configurable sync offset to stay in sync with Plexamp.
 
 ## Requirements
@@ -48,6 +51,18 @@ Ampdeck brings Plexamp to your Stream Deck+. See your album art, track info, and
 
 5. Start Stream Deck
 
+## Updating
+
+Updates use the same process as a fresh install — the installer replaces the existing plugin files automatically. Your settings (server URL, token, client name, etc.) are preserved.
+
+1. Download the latest release from the [Releases](https://github.com/rackemrack/ampdeck/releases) page
+2. Extract the zip
+3. **Close Stream Deck completely**
+4. Run `install.bat` (Windows) or `./install.sh` (macOS) — same as initial install
+5. Start Stream Deck
+
+That's it. No need to remove the old version first.
+
 ## Setup
 
 1. Find **Ampdeck** in the actions list on the right side of the Stream Deck app
@@ -68,8 +83,11 @@ Each dial panel can be configured independently:
 |---------|---------|
 | **Display Mode** | Artist, Album, Track Title, or Time |
 | **Font Size** | Small (12) through XX-Large (28) |
+| **Dial Action** | None, Next/Previous (rotate) + Play/Pause (press), or Volume (rotate) + Play/Pause (press) |
 | **Total Panels** | How many panels share the progress bar (1–4) |
 | **Panel Position** | This panel's position in the progress bar sequence, or None to disable |
+| **Text Color** | White, Light Gray, Orange, Amber, or Black |
+| **Dynamic Colors** | When enabled, accent colors are extracted from album art. When disabled, they stay orange. |
 
 For example, to have the progress bar span all 4 dials: set each panel to "4 panels" and positions 1, 2, 3, 4 from left to right.
 

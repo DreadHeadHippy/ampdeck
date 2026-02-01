@@ -1,4 +1,4 @@
-// Ampdeck v1.0 - Stream Deck Plugin for Plexamp
+// Ampdeck v1.0.1 - Stream Deck Plugin for Plexamp
 // Dual Web Worker architecture: poll worker (Plex sync) + render worker (interpolated display)
 
 var websocket = null;
@@ -32,6 +32,10 @@ var HOLD_THRESHOLD = 400;
 var SEEK_INTERVAL = 200;
 var SEEK_AMOUNT = 10000;
 
+// Volume state
+var currentVolume = 50;
+var VOLUME_STEP = 5;
+
 // Workers
 var pollWorker = null;
 var renderWorker = null;
@@ -42,6 +46,29 @@ function log(msg, data) {
     var ts = new Date().toISOString().substr(11, 8);
     if (data !== undefined) console.log("[Ampdeck " + ts + "] " + msg, data);
     else console.log("[Ampdeck " + ts + "] " + msg);
+}
+
+// ============================================
+// SETTINGS HELPERS
+// ============================================
+function getTextColor() {
+    return globalSettings.textColor || "#FFFFFF";
+}
+
+function getSecondaryTextColor() {
+    var tc = getTextColor();
+    // Return a dimmer version for secondary text
+    if (tc === "#FFFFFF") return "#888888";
+    if (tc === "#BBBBBB") return "#777777";
+    if (tc === "#E5A00D") return "#B07A0A";
+    if (tc === "#FFBF00") return "#B08600";
+    if (tc === "#000000") return "#444444";
+    return "#888888";
+}
+
+function getAccentColor() {
+    if (globalSettings.dynamicColors === false) return "#E5A00D";
+    return dominantColor;
 }
 
 // ============================================
@@ -132,7 +159,7 @@ function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, in
     websocket.onopen = function() {
         websocket.send(JSON.stringify({ event: inRegisterEvent, uuid: inPluginUUID }));
         websocket.send(JSON.stringify({ event: "getGlobalSettings", context: inPluginUUID }));
-        log("Plugin connected - Ampdeck v1.0");
+        log("Plugin connected - Ampdeck v1.0.1");
     };
 
     websocket.onmessage = function(evt) {
@@ -144,6 +171,8 @@ function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, in
             case "didReceiveSettings": onDidReceiveSettings(data); break;
             case "keyDown": onKeyDown(data); break;
             case "keyUp": onKeyUp(data); break;
+            case "dialRotate": onDialRotate(data); break;
+            case "dialDown": onDialDown(data); break;
         }
     };
 }
@@ -173,6 +202,8 @@ function onDidReceiveSettings(data) {
     if (actions[data.context]) actions[data.context].settings = data.payload.settings || {};
     applyGlobalFromSettings(data.payload.settings || {});
     saveGlobalSettings();
+    // Force layout refresh when appearance settings change
+    lastLayoutState[data.context] = null;
     updateInterpolatedPosition();
     updateAllDisplays();
 }
@@ -182,6 +213,8 @@ function applyGlobalFromSettings(s) {
     if (s.plexToken) globalSettings.plexToken = s.plexToken;
     if (s.clientName) globalSettings.clientName = s.clientName;
     if (s.syncOffset !== undefined) globalSettings.syncOffset = s.syncOffset;
+    if (s.textColor) globalSettings.textColor = s.textColor;
+    if (s.dynamicColors !== undefined) globalSettings.dynamicColors = s.dynamicColors;
 }
 
 // ============================================
@@ -213,6 +246,34 @@ function onKeyUp(data) {
         else if (action === "com.rackemrack.ampdeck.next") skipNext();
     }
     delete buttonHoldState[ctx];
+}
+
+// ============================================
+// DIAL HANDLING (Stream Deck+ encoders)
+// ============================================
+function onDialRotate(data) {
+    var ctx = data.context;
+    var settings = actions[ctx] ? actions[ctx].settings : {};
+    var dialAction = settings.dialAction || "none";
+    var ticks = data.payload.ticks || 0;
+
+    if (dialAction === "skip") {
+        if (ticks > 0) skipNext();
+        else if (ticks < 0) skipPrevious();
+    } else if (dialAction === "volume") {
+        var newVolume = Math.max(0, Math.min(100, currentVolume + (ticks * VOLUME_STEP)));
+        setVolume(newVolume);
+    }
+}
+
+function onDialDown(data) {
+    var ctx = data.context;
+    var settings = actions[ctx] ? actions[ctx].settings : {};
+    var dialAction = settings.dialAction || "none";
+
+    if (dialAction !== "none") {
+        togglePlayPause();
+    }
 }
 
 // ============================================
@@ -261,6 +322,16 @@ function seekTrack(offsetMs) {
         updateInterpolatedPosition();
         updateAllDisplays();
     }).catch(function(e) { log("Seek error: " + e.message); });
+}
+
+function setVolume(level) {
+    var machineId = getClientId();
+    if (!machineId || !globalSettings.plexServerUrl || !globalSettings.plexToken) return;
+    currentVolume = Math.max(0, Math.min(100, level));
+    var url = globalSettings.plexServerUrl + "/player/playback/setParameters?volume=" + currentVolume + "&commandID=1&X-Plex-Token=" + globalSettings.plexToken + "&X-Plex-Target-Client-Identifier=" + machineId;
+    fetch(url).then(function() {
+        log("Volume: " + currentVolume);
+    }).catch(function(e) { log("Volume error: " + e.message); });
 }
 
 function saveGlobalSettings() {
@@ -432,17 +503,19 @@ function updatePlayPauseButton(ctx) {
     c.fillStyle = "#000000";
     c.fillRect(0, 0, 144, 144);
 
+    var textColor = getTextColor();
+
     if (playbackState === "stopped") {
         c.fillStyle = "#333333";
         c.beginPath();
         c.moveTo(50, 42); c.lineTo(110, 72); c.lineTo(50, 102);
         c.closePath(); c.fill();
     } else if (playbackState === "playing") {
-        c.fillStyle = "#FFFFFF";
+        c.fillStyle = textColor;
         c.fillRect(45, 42, 18, 60);
         c.fillRect(81, 42, 18, 60);
     } else {
-        c.fillStyle = "#FFFFFF";
+        c.fillStyle = textColor;
         c.beginPath();
         c.moveTo(50, 42); c.lineTo(110, 72); c.lineTo(50, 102);
         c.closePath(); c.fill();
@@ -457,6 +530,10 @@ function updateInfoButton(ctx) {
     c.fillStyle = "#000000";
     c.fillRect(0, 0, 144, 144);
 
+    var textColor = getTextColor();
+    var secondaryColor = getSecondaryTextColor();
+    var accentColor = getAccentColor();
+
     if (currentTrack) {
         var media = currentTrack.Media && currentTrack.Media[0];
         var format = media && media.audioCodec ? media.audioCodec.toUpperCase() : "---";
@@ -466,19 +543,19 @@ function updateInfoButton(ctx) {
 
         c.textAlign = "center";
         c.font = "bold 28px sans-serif";
-        c.fillStyle = "#FFFFFF";
+        c.fillStyle = textColor;
         c.fillText(format, 72, 42);
 
         c.font = "14px sans-serif";
-        c.fillStyle = "#888888";
+        c.fillStyle = secondaryColor;
         c.fillText(bitrate, 72, 62);
 
         c.font = "bold 16px sans-serif";
-        c.fillStyle = "#FFFFFF";
+        c.fillStyle = textColor;
         c.fillText("TRACK", 72, 95);
 
         c.font = "bold 28px sans-serif";
-        c.fillStyle = dominantColor;
+        c.fillStyle = accentColor;
         c.fillText(trackNum + "/" + totalTracks, 72, 125);
     } else {
         c.fillStyle = "#333333";
@@ -496,6 +573,10 @@ function updateTimeButton(ctx) {
     c.fillStyle = "#000000";
     c.fillRect(0, 0, 144, 144);
 
+    var textColor = getTextColor();
+    var secondaryColor = getSecondaryTextColor();
+    var accentColor = getAccentColor();
+
     if (playbackState === "stopped") {
         c.textAlign = "center";
         c.font = "bold 36px sans-serif";
@@ -508,17 +589,17 @@ function updateTimeButton(ctx) {
     } else {
         c.textAlign = "center";
         c.font = "bold 36px sans-serif";
-        c.fillStyle = "#FFFFFF";
+        c.fillStyle = textColor;
         c.fillText(formatTime(displayPosition), 72, 55);
 
         c.font = "20px sans-serif";
-        c.fillStyle = "#666666";
+        c.fillStyle = secondaryColor;
         c.fillText("/ " + formatTime(trackDuration), 72, 82);
 
         c.fillStyle = "#333333";
         c.fillRect(15, 108, 114, 10);
         if (displayProgress > 0) {
-            c.fillStyle = dominantColor;
+            c.fillStyle = accentColor;
             c.fillRect(15, 108, (displayProgress / 100) * 114, 10);
         }
     }
@@ -532,6 +613,18 @@ function updateStripDisplay(ctx) {
     var totalPanels = parseInt(settings.progressTotalPanels) || 3;
     var position = parseInt(settings.progressPosition) || 1;
 
+    var textColor = settings.textColor || getTextColor();
+    var accentColor = getAccentColor();
+
+    // Compute dimmed version of the chosen text color for secondary text
+    var stripSecondary;
+    if (textColor === "#FFFFFF") stripSecondary = "#999999";
+    else if (textColor === "#BBBBBB") stripSecondary = "#777777";
+    else if (textColor === "#E5A00D") stripSecondary = "#B07A0A";
+    else if (textColor === "#FFBF00") stripSecondary = "#B08600";
+    else if (textColor === "#000000") stripSecondary = "#444444";
+    else stripSecondary = "#999999";
+
     var label = "", text = "";
     if (currentTrack) {
         if (displayMode === "artist") { label = "ARTIST"; text = currentTrack.grandparentTitle || "Unknown"; }
@@ -544,21 +637,26 @@ function updateStripDisplay(ctx) {
     }
 
     var labelSize = Math.max(14, Math.round(fontSize * 0.85));
-    var progressBar = createProgressBarSegment(position, totalPanels, displayProgress, dominantColor);
+    var progressBar = createProgressBarSegment(position, totalPanels, displayProgress, accentColor);
 
-    // Only resend layout when playback state changes (affects label color)
-    var layoutKey = playbackState === "paused" ? "paused" : "active";
+    // Compute a layout key that captures all appearance-affecting state
+    var pausedDim = playbackState === "paused";
+    var layoutKey = (pausedDim ? "p" : "a") + "|" + textColor + "|" + (pausedDim ? stripSecondary : textColor);
     if (lastLayoutState[ctx] !== layoutKey) {
         lastLayoutState[ctx] = layoutKey;
+
+        var labelColor = pausedDim ? stripSecondary : textColor;
+        var textDisplayColor = pausedDim ? stripSecondary : stripSecondary;
+
         setFeedbackLayout(ctx, {
             "id": "com.rackemrack.ampdeck.layout",
             "items": [
                 { "key": "label", "type": "text", "rect": [0, 15, 200, labelSize + 4],
                   "font": { "size": labelSize, "weight": 700 },
-                  "color": playbackState === "paused" ? "#888888" : "#FFFFFF", "alignment": "center" },
+                  "color": labelColor, "alignment": "center" },
                 { "key": "displayText", "type": "text", "rect": [0, 15 + labelSize + 8, 200, fontSize + 8],
                   "font": { "size": fontSize, "weight": 400 },
-                  "color": playbackState === "paused" ? "#666666" : "#999999", "alignment": "center" },
+                  "color": textDisplayColor, "alignment": "center" },
                 { "key": "progressBar", "type": "pixmap", "rect": [0, 82, 200, 4] }
             ]
         });
@@ -643,4 +741,4 @@ function stopPolling() {
     log("Stopped polling");
 }
 
-log("Ampdeck v1.0 loaded");
+log("Ampdeck v1.0.1 loaded");

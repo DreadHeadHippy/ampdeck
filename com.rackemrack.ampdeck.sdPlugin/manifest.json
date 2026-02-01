@@ -6,13 +6,17 @@
   "Name": "Ampdeck",
   "Icon": "imgs/plugin-icon",
   "URL": "https://plex.tv",
-  "Version": "1.0.0",
+  "Version": "1.0.1",
   "Category": "Ampdeck",
   "CategoryIcon": "imgs/category-icon",
   "OS": [
     {
       "Platform": "windows",
       "MinimumVersion": "10"
+    },
+    {
+      "Platform": "mac",
+      "MinimumVersion": "10.15"
     }
   ],
   "Software": {
@@ -42,14 +46,14 @@
         }
       ],
       "SupportedInMultiActions": false,
-      "Tooltip": "Shows now playing info on the touch strip",
+      "Tooltip": "Shows now playing info on the touch strip with configurable dial controls",
       "UUID": "com.rackemrack.ampdeck.strip",
       "Controllers": ["Encoder"],
       "Encoder": {
         "layout": "layouts/now-playing.json",
         "TriggerDescription": {
-          "Rotate": "Unused",
-          "Push": "Unused",
+          "Rotate": "Next / Previous or Volume",
+          "Push": "Play / Pause",
           "Touch": "Unused"
         }
       },
