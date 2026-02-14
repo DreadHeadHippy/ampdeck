@@ -1,4 +1,4 @@
-// Ampdeck v1.2.0 - Stream Deck Plugin for Plexamp
+// Ampdeck v1.3.1 - Stream Deck Plugin for Plexamp
 // Local player API for commands + timeline poll for real-time playback position
 // Server connection retained for metadata and album art
 
@@ -288,10 +288,10 @@ function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, in
         websocket.send(JSON.stringify({ event: inRegisterEvent, uuid: inPluginUUID }));
         websocket.send(JSON.stringify({ event: "getGlobalSettings", context: inPluginUUID }));
         console.log("==========================================");
-        console.log("AMPDECK v1.2.0 - PLUGIN CONNECTED");
+        console.log("AMPDECK v1.3.1 - PLUGIN CONNECTED");
         console.log("Check console for [OVERLAY], [VOLUME], [RATING], [STRIP] messages");
         console.log("==========================================");
-        log("Plugin connected - Ampdeck v1.2.0");
+        log("Plugin connected - Ampdeck v1.3.1");
     };
 
     websocket.onmessage = function(evt) {
@@ -674,8 +674,21 @@ function cycleRating(ctx) {
     // Update display immediately
     updateAllDisplays();
     
-    // Save to Plex server
-    setRating(newRating, null);
+    // Cancel any existing save timer
+    if (ratingSaveTimer) {
+        clearTimeout(ratingSaveTimer);
+        debugLog("[RATING]", "Cancelled previous save timer (button press)");
+    }
+    
+    // Start new timer to save after 2 seconds of inactivity (same as dial)
+    pendingRatingContext = ctx;
+    ratingSaveTimer = setTimeout(function() {
+        debugLog("[RATING]", "Save timer expired (button), saving rating now");
+        setRating(currentRating, pendingRatingContext);
+        ratingSaveTimer = null;
+        pendingRatingContext = null;
+    }, 2000);
+    debugLog("[RATING]", "Started 2-second save timer (button)");
 }
 
 function setRating(rating, ctx) {
@@ -853,6 +866,16 @@ function processTimeline(xmlText) {
     var trackEl = trackElements.length > 0 ? trackElements[0] : null;
 
     var trackChanged = ratingKey !== lastTimelineRatingKey;
+    
+    // If track is changing and there's a pending rating save, flush it immediately
+    if (trackChanged && ratingSaveTimer) {
+        clearTimeout(ratingSaveTimer);
+        debugLog("[RATING]", "Track changing, flushing pending rating save immediately");
+        setRating(currentRating, pendingRatingContext);
+        ratingSaveTimer = null;
+        pendingRatingContext = null;
+    }
+    
     lastTimelineRatingKey = ratingKey;
 
     if (trackEl) {
@@ -1123,6 +1146,15 @@ function pollPlexServer() {
                 var newDuration = track.duration || 0;
                 var newPosition = track.viewOffset || 0;
                 var trackChanged = !currentTrack || currentTrack.ratingKey !== track.ratingKey;
+
+                // If track is changing and there's a pending rating save, flush it immediately
+                if (trackChanged && ratingSaveTimer) {
+                    clearTimeout(ratingSaveTimer);
+                    debugLog("[RATING]", "Track changing (server poll), flushing pending rating save immediately");
+                    setRating(currentRating, pendingRatingContext);
+                    ratingSaveTimer = null;
+                    pendingRatingContext = null;
+                }
 
                 // Clear old rating overrides when track changes
                 if (trackChanged && currentTrack && currentTrack.ratingKey && userSetRatings[currentTrack.ratingKey] !== undefined) {
@@ -1442,6 +1474,7 @@ function updateRatingButton(ctx) {
         } else if (displayStyle === "numeric") {
             // Numeric only (e.g., "4.5" or "4")
             c.font = "bold " + fontSize + "px sans-serif";
+            c.textBaseline = "middle";
             c.fillStyle = accentColor;
             if (currentRating === 0) {
                 c.fillText("0", 72, 90);
@@ -1452,6 +1485,7 @@ function updateRatingButton(ctx) {
         } else {
             // Both - numeric with scale (e.g., "4.5/5" or "4/5")
             c.font = "bold " + fontSize + "px sans-serif";
+            c.textBaseline = "middle";
             c.fillStyle = accentColor;
             if (currentRating === 0) {
                 c.fillText("0/5", 72, 90);
@@ -1629,7 +1663,7 @@ function updateStripDisplay(ctx) {
 
     var pausedDim = playbackState === "paused";
     var labelColor = pausedDim ? stripSecondary : textColor;
-    var textDisplayColor = pausedDim ? stripSecondary : stripSecondary;
+    var textDisplayColor = pausedDim ? stripSecondary : textColor;
 
     // Always use pixmap for displayText so font/position is consistent
     var textAreaH = fontSize + 8;
@@ -1929,4 +1963,4 @@ function stopPolling() {
     log("Stopped polling");
 }
 
-log("Ampdeck v1.2.0 loaded");
+log("Ampdeck v1.3.1 loaded");

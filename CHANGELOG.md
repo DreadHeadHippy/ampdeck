@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.3.1
+
+### Bug Fixes
+- **Fixed touch strip text color**: Track/artist/album names now display in the user's chosen text color (matching labels) instead of always grey when playing. Previously, both the label and content text were incorrectly using the secondary grey color due to a copy-paste error.
+- **Fixed rating button text positioning**: Numeric and "both" display modes now properly center text vertically regardless of font size. Previously, text would appear too high at larger font sizes.
+- **Fixed rating loss on quick track changes**: Ratings now save immediately when switching tracks, even if you skip within the 2-second debounce window. Previously, ratings could be lost if you rated a track and switched songs too quickly.
+- **Fixed rating button API spam**: Rating button now uses the same 2-second debounce as the dial to prevent multiple API calls when clicking rapidly. Display updates immediately, but saves are batched intelligently.
+
+### Performance Notes
+- Rating saves remain debounced (2 seconds) to prevent API spam while adjusting the dial on a single track
+- On track change, pending ratings flush immediately (one API call per track)
+- No additional polling overhead—efficient use of existing 1-second timeline poll
+
 ## v1.3.0
 
 ### New Features
