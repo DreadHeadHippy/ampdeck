@@ -63,7 +63,7 @@ That's it. Stream Deck handles the rest.
 
 ## Updating
 
-1. Download the latest **`com.rackemrack.ampdeck.streamDeckPlugin`** from the [Releases](https://github.com/rackemrack/ampdeck/releases) page
+1. Download the latest **`install.bat`** from the [Releases](https://github.com/rackemrack/ampdeck/releases) page
 2. Double-click the file
 
 Stream Deck automatically replaces the old version. Your settings are preserved.
