@@ -4,9 +4,12 @@
 
 ![Ampdeck on Stream Deck+](her0.png)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/rackemrack)
+![Release](https://img.shields.io/github/v/release/DreadHeadHippy/ampdeck)
+![Status](https://img.shields.io/badge/status-actively%20maintained-brightgreen)
 ![Downloads](https://img.shields.io/github/downloads/DreadHeadHippy/ampdeck/total)
+![Last Commit](https://img.shields.io/github/last-commit/DreadHeadHippy/ampdeck)
+[![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/rackemrack)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
